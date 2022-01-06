@@ -1,0 +1,36 @@
+#!/bin/bash
+test -v "$DEBUG" || set -o xtrace
+set -e
+
+run::python() {
+    docker run --rm -i \
+           --name python-dev \
+           -v $(pwd)/src:/src \
+           python:dev python3 -u "$@"
+}
+
+sh::python() {
+    docker run --rm -it \
+           --name python-sh-dev \
+           --entrypoint sh \
+           -v $(pwd)/src:/src \
+           python:dev
+}
+
+build::image() {
+    (
+        cat <<EOF
+
+FROM python:3.11.0a3-bullseye
+
+EOF
+    ) | docker build -t python:dev -
+}
+
+if [ "$1" = "build-image" ]; then
+    build::image
+elif [ "$1" = "sh::python" ]; then
+    sh::python
+else
+    run::python "$@"
+fi
